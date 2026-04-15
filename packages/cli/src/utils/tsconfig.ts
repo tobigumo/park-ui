@@ -64,11 +64,16 @@ const getTsConfigAliasPrefix = (tsConfig: TSConfigSchema): string | null => {
   const paths = tsConfig.compilerOptions.paths
   const commonPaths = ['./*', './src/*', './app/*', './resources/js/*']
 
-  for (const [alias, pathList] of Object.entries(paths)) {
+  // Exclude the "*": ["./*"] catch-all used as a baseUrl replacement for bare imports (e.g. "styled-system"); it is not a user alias.
+  const aliasEntries = Object.entries(paths).filter(
+    ([alias]) => alias !== '*' && alias.endsWith('/*'),
+  )
+
+  for (const [alias, pathList] of aliasEntries) {
     if (pathList.some((p) => commonPaths.includes(p))) {
       return alias.replace(/\/\*$/, '')
     }
   }
 
-  return Object.keys(paths)[0]?.replace(/\/\*$/, '') ?? null
+  return aliasEntries[0]?.[0].replace(/\/\*$/, '') ?? null
 }
