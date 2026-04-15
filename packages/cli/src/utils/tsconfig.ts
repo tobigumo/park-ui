@@ -1,3 +1,4 @@
+import path from 'node:path'
 import * as p from '@clack/prompts'
 import { Context, Effect, Layer, Schema } from 'effect'
 import { parse } from 'tsconfck'
@@ -6,7 +7,7 @@ import { PandaConfig } from './panda-config'
 
 const TSConfigSchema = Schema.Struct({
   compilerOptions: Schema.Struct({
-    baseUrl: Schema.String,
+    baseUrl: Schema.optional(Schema.String),
     paths: Schema.Record({
       key: Schema.String,
       value: Schema.mutable(Schema.Array(Schema.String)),
@@ -29,14 +30,18 @@ const getConfig = PandaConfig.pipe(
       catch: () => TSConfigNotFound(process.cwd()),
     }),
   ),
-  Effect.flatMap((config) => Schema.decodeUnknown(TSConfigSchema)(config.tsconfig)),
-  Effect.flatMap((config) => {
+  Effect.flatMap((parsed) =>
+    Schema.decodeUnknown(TSConfigSchema)(parsed.tsconfig).pipe(
+      Effect.map((config) => ({ config, tsconfigFile: parsed.tsconfigFile })),
+    ),
+  ),
+  Effect.flatMap(({ config, tsconfigFile }) => {
     const aliasPrefix = getTsConfigAliasPrefix(config)
     if (!aliasPrefix) return Effect.fail(TSConfigInvalid())
 
     return Effect.succeed({
       aliasPrefix,
-      baseUrl: config.compilerOptions?.baseUrl || '',
+      baseUrl: config.compilerOptions?.baseUrl ?? path.dirname(tsconfigFile),
       paths: config.compilerOptions?.paths || {},
     })
   }),
