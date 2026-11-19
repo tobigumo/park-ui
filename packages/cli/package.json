@@ -54,7 +54,7 @@
     "@clack/prompts": "1.0.0-alpha.6",
     "commander": "14.0.2",
     "cosmiconfig": "9.0.0",
-    "effect": "3.19.15",
+    "effect": "3.22.1",
     "fs-extra": "11.3.3",
     "magicast": "0.5.1",
     "package-directory": "8.1.0",
